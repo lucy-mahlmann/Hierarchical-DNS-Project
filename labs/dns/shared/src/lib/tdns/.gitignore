@@ -1,0 +1,6 @@
+*.d
+*.o
+*~
+tdns
+testrunner
+tdig

@@ -1,0 +1,11 @@
+ip link set eth0 address 00:06:0f:00:00:01
+ip link set eth1 address 00:06:0f:00:00:02
+
+ip addr add 60.0.0.1/24 dev eth0
+ip addr add 100.0.0.14/24 dev eth1
+
+ip route add 10.0.0.0/24 via 100.0.0.13 dev eth1
+ip route add 20.0.0.0/24 via 100.0.0.13 dev eth1
+ip route add 30.0.0.0/24 via 100.0.0.13 dev eth1
+ip route add 40.0.0.0/24 via 100.0.0.13 dev eth1
+ip route add 50.0.0.0/24 via 100.0.0.13 dev eth1
