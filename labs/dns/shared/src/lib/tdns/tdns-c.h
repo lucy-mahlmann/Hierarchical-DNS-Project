@@ -81,7 +81,8 @@ uint8_t TDNSParseMsg (const char *message, uint64_t size, struct TDNSParseResult
 /* Returns 0 if it fails to find a corresponding record */
 /* Returns 1 if it finds a corresponding record */
 /* If the record indicates delegation, result->delegate_ip will store */
-/* the IP address to which it delegates the query */uint8_t TDNSFind (struct TDNSServerContext* context, struct TDNSParseResult *parsed, struct TDNSFindResult *result);
+/* the IP address to which it delegates the query */
+uint8_t TDNSFind (struct TDNSServerContext* context, struct TDNSParseResult *parsed, struct TDNSFindResult *result);
 
 /**************/
 /* for Part 2 */
