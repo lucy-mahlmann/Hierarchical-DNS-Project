@@ -23,7 +23,7 @@ int main() {
 /* PART1 TODO: Implement a DNS nameserver for the utexas.edu zone */
     
     /* 1. Create an **UDP** socket */
-    sockfd = socket (AF_INET, SOCK_DGRAM, 0);
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     //Note that a UDP server doesn’t have to listen() and accept() since it is connectionless, 
     //unlike TCP (what we did in A1). 
     //Also, the UDP server should use sendto()/recvfrom() to set/get a client’s address along with 
@@ -39,7 +39,10 @@ int main() {
     server_addr.sin_addr.s_addr = INADDR_ANY; // all interfaces
     server_addr.sin_port = htons(DNS_PORT);
 
-    bind(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
+    if (bind(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
+        fprintf(stderr, "cs-dns: bind socket error.\n");
+        exit(EXIT_FAILURE);
+    }
 
     /* 3. Initialize a server context using TDNSInit() */
     /* This context will be used for future TDNS library function calls */
@@ -57,6 +60,10 @@ int main() {
     struct TDNSFindResult *ret;
     while(true) {
         uint64_t size = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr *)client_addr, &client_len); // todo should be client sockfd??
+        if (size == -1) {
+            fprintf(stderr, "cs-dns: recv error\n");
+            exit(EXIT_FAILURE);
+        }
         uint8_t res = TDNSParseMsg(buffer, size, parsed);
         if (res == 0) {
             /* 6. If it is a query for A, AAAA, NS DNS record */
@@ -72,5 +79,6 @@ int main() {
         }
         /* Otherwise, just ignore it. */
     }
+    // TODO should i close the socket
     return 0;
 }
