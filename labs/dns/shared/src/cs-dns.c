@@ -39,7 +39,7 @@ int main() {
     server_addr.sin_addr.s_addr = INADDR_ANY; // all interfaces
     server_addr.sin_port = htons(DNS_PORT);
 
-    if (bind(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
+    if (bind(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
         fprintf(stderr, "cs-dns: bind socket error.\n");
         exit(EXIT_FAILURE);
     }
@@ -58,8 +58,8 @@ int main() {
     /* 5. Receive a message continuously and parse it using TDNSParseMsg() */
     struct TDNSParseResult *parsed;
     struct TDNSFindResult *ret;
-    while(true) {
-        uint64_t size = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr *)client_addr, &client_len); // todo should be client sockfd??
+    while(1) {
+        uint64_t size = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&client_addr, &client_len); // todo should be client sockfd??
         if (size == -1) {
             fprintf(stderr, "cs-dns: recv error\n");
             exit(EXIT_FAILURE);
@@ -72,9 +72,9 @@ int main() {
                 // error it failed to find record
                 // respond with rcode 3(NXDOMAIN)
                 const char *rcode3 = "NXDOMAIN";
-                sendto(sockfd, rcode3, strlen(rcode3), 0, (struct sockaddr *)client_addr, &client_len);
+                sendto(sockfd, rcode3, strlen(rcode3), 0, (struct sockaddr*)&client_addr, client_len);
             } else {
-                sendto(sockfd, ret.serialized, ret.len, 0, (struct sockaddr *)client_addr, &client_len);
+                sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
             }
         }
         /* Otherwise, just ignore it. */
