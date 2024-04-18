@@ -68,6 +68,7 @@ void TDNSCreateZone (struct TDNSServerContext *ctx, const char *zoneurl);
 /* e.g., TDNSAddRecord(ctx, "google.com", "maps", NULL, "ns.maps.google.com")*/
 /* Then you can add an IP for ns.maps.google.com like below */
 /* e.g., TDNSAddRecord(ctx, "maps.google.com", "ns", "111.111.111.111", NULL)*/
+// if NS is not null then ns record, redirects to a name server,
 void TDNSAddRecord (struct TDNSServerContext *ctx, const char *zoneurl, const char *subdomain, const char *IPv4, const char* NS);
 
 /* Parses a DNS message and stores the result in `parsed` */

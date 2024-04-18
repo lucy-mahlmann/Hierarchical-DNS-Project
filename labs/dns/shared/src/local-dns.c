@@ -90,7 +90,7 @@ int main() {
     /* getNSbyQID() and getAddrbyQID() */
     /* You can add the NS information to the response using TDNSPutNStoMessage() */
     /* Delete a per-query context using delAddrQID() and putNSQID() */
-
+        
     /* 7-1. If the message is a non-authoritative response */
     /* (i.e., it contains referral to another nameserver) */
     /* send an iterative query to the corresponding nameserver */

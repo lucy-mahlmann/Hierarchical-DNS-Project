@@ -49,17 +49,16 @@ int main() {
     struct TDNSServerContext *ctx = TDNSInit();
 
     /* 4. Create the utexas.edu zone using TDNSCreateZone() */
-    const char * zoneurl = "utexas.edu";
-    TDNSCreateZone(ctx, zoneurl);
+    TDNSCreateZone(ctx, "utexas.edu");
     /* Add an IP address for www.utexas.edu domain using TDNSAddRecord() */
-    TDNSAddRecord(ctx, zoneurl, "www", "40.0.0.10", NULL);
+    TDNSAddRecord(ctx, "utexas.edu", "www", "40.0.0.10", NULL);
     /* Add the UTCS nameserver ns.cs.utexas.edu using using TDNSAddRecord() */
-    TDNSAddRecord(ctx, zoneurl, "cs", NULL, "ns.cs.utexas.edu");
+    TDNSAddRecord(ctx, "utexas.edu", "cs", NULL, "ns.cs.utexas.edu");
     /* Add an IP address for ns.cs.utexas.edu domain using TDNSAddRecord() */
     TDNSAddRecord(ctx, "cs.utexas.edu", "ns", "50.0.0.30", NULL);
     /* 5. Receive a message continuously and parse it using TDNSParseMsg() */
-    struct TDNSParseResult *parsed;
-    struct TDNSFindResult *ret;
+    struct TDNSParseResult *parsed = malloc(sizeof(struct TDNSParseResult));
+    struct TDNSFindResult *ret = malloc(sizeof(struct TDNSFindResult));
     while(1) {
         uint64_t size = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&client_addr, &client_len); // todo should be client sockfd??
         if (size == -1) {

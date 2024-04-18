@@ -48,16 +48,16 @@ int main() {
     /* This context will be used for future TDNS library function calls */
     struct TDNSServerContext *ctx = TDNSInit();
 
-    /* 4. Create the utexas.edu zone using TDNSCreateZone() */
-    const char * zoneurl = "utexas.edu";
-    TDNSCreateZone(ctx, zoneurl);
+    /* 4. Create the cs.utexas.edu zone using TDNSCreateZone() */
+    TDNSCreateZone(ctx, "cs.utexas.edu");
     /*Add an IP address for cs.utexas.edu domain using TDNSAddRecord() */
-    TDNSAddRecord(ctx, zoneurl, "cs", "50.0.0.10", NULL);
+    // zone is edu
+    TDNSAddRecord(ctx, "cs.utexas.edu", "", "50.0.0.10", NULL);
     /* Add an IP address for aquila.cs.utexas.edu domain using TDNSAddRecord() */
     TDNSAddRecord(ctx, "cs.utexas.edu", "aquila", "50.0.0.20", NULL);
     /* 5. Receive a message continuously and parse it using TDNSParseMsg() */
-    struct TDNSParseResult *parsed;
-    struct TDNSFindResult *ret;
+   struct TDNSParseResult *parsed = malloc(sizeof(struct TDNSParseResult));
+    struct TDNSFindResult *ret = malloc(sizeof(struct TDNSFindResult));
     while(1) {
         uint64_t size = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&client_addr, &client_len); // todo should be client sockfd??
         if (size == -1) {
