@@ -68,15 +68,17 @@ int main() {
             exit(EXIT_FAILURE);
         }
         uint8_t res = TDNSParseMsg(buffer, size, parsed);
-        printf("finished parsing message");
+        printf("finished parsing message\n");
         if (res == 0) {
             /* 6. If it is a query for A, AAAA, NS DNS record */
             /* find the corresponding record using TDNSFind() and send the response back */
-            if (TDNSFind(ctx, parsed, ret) == 1) {
-                // found a record
-                sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
-                printf("finished sending record\n");
-            }
+            // if (TDNSFind(ctx, parsed, ret) == 1) {
+            //     // found a record
+            //     sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
+            //     printf("finished sending record\n");
+            // }
+            TDNSFind(ctx, parsed, ret);
+            sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
         }
         /* Otherwise, just ignore it. */
     }
