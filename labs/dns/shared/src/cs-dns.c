@@ -68,13 +68,10 @@ int main() {
             /* 6. If it is a query for A, AAAA, NS DNS record */
             /* find the corresponding record using TDNSFind() and send the response back */
             if (TDNSFind(ctx, parsed, ret) == 0) {
-                // error it failed to find record
-                // respond with rcode 3(NXDOMAIN)
-                const char *rcode3 = "NXDOMAIN";
-                sendto(sockfd, rcode3, strlen(rcode3), 0, (struct sockaddr*)&client_addr, client_len);
-            } else {
+                // found a record
                 sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
             }
+            //TODO i dont think i have to print the error, I think TDNSFind does that for me??
         }
         /* Otherwise, just ignore it. */
     }

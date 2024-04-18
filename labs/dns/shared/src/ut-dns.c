@@ -72,13 +72,8 @@ int main() {
         if (res == 0) {
             /* 6. If it is a query for A, AAAA, NS DNS record */
             /* find the corresponding record using TDNSFind() and send the response back */
-            if (TDNSFind(ctx, parsed, ret) == 0) {
-                // error it failed to find record
-                // respond with rcode 3(NXDOMAIN)
-                const char *rcode3 = "NXDOMAIN";
-                sendto(sockfd, rcode3, strlen(rcode3), 0, (struct sockaddr*)&client_addr, client_len);
-                printf("finished sending error message\n");
-            } else {
+            if (TDNSFind(ctx, parsed, ret) == 1) {
+                // found a record
                 sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
                 printf("finished sending record\n");
             }
