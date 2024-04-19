@@ -96,7 +96,7 @@ int main() {
             /* You can ignore the other types of queries */
 			if (TDNSFind(ctx, parsed, ret) == 1) {
                 // found a record
-				if (ret->delegation_ip != NULL) {
+				if (ret->delegate_ip != NULL) {
 					/* a. If the record is found and the record indicates delegation, */
             		/* send an iterative query to the corresponding nameserver */
             		/* You should store a per-query context using putAddrQID() and putNSQID() */
@@ -105,7 +105,7 @@ int main() {
 					// You should send the DNS query message again to another nameserver to which a local DNS server delegates 
 					// the query. In the case of delegation, the nameserver information would be stored in 
 					// struct TDNSParseResult's nsIP and nsDomain fields.
-					putAddrQID(ctx, parsed->dh->id, (struct sockaddr*)&client_addr); //is client_addr right?
+					putAddrQID(ctx, parsed->dh->id, &client_addr); //is client_addr right?
 					putNSQID(ctx, parsed->dh->id, parsed->nsIP, parsed->nsDomain);
 					// how to send query?? sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
 					// maybe keep calling TDNSFind(ctx, parsed, ret) until ret->delegation_ip != NULL 
@@ -129,10 +129,10 @@ int main() {
 				/* You can add the NS information to the response using TDNSPutNStoMessage() */
 				/* Delete a per-query context using delAddrQID() and putNSQID() */
 				getNSbyQID(ctx, parsed->dh->id, &(parsed->nsIP), &(parsed->nsDomain));
-				getAddrbyQID(ctx, parsed->dh->id);
+				getAddrbyQID(ctx, parsed->dh->id, &client_addr);
 				uint16_t newLen = TDNSPutNStoMessage(buffer, size, parsed, parsed->nsIP, parsed->nsDomain);
 				// send response to original client
-				sendto(sockfd, message, newLen, 0, (struct sockaddr*)&client_addr, client_len); // is this the right client to send to??
+				sendto(sockfd, buffer, newLen, 0, (struct sockaddr*)&client_addr, client_len); // is this the right client to send to??
 				delAddrQID(ctx, parsed->dh->id);
 				putNSQID(ctx, parsed->dh->id, parsed->nsIP, parsed->nsDomain);
 			} else {
