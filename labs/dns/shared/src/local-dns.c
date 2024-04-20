@@ -107,7 +107,8 @@ int main() {
 					// struct TDNSParseResult's nsIP and nsDomain fields.
 					putAddrQID(ctx, parsed->dh->id, &client_addr); //is client_addr right?
 					putNSQID(ctx, parsed->dh->id, parsed->nsIP, parsed->nsDomain);
-					// how to send query?? sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
+					// how to send query?? 
+                    sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
 					// maybe keep calling TDNSFind(ctx, parsed, ret) until ret->delegation_ip != NULL 
 				} else {
 					/* b. If the record is found and the record doesn't indicate delegation, */
@@ -145,6 +146,7 @@ int main() {
 				ret->len = querySize;
 				//should i set ret->delagate_ip ??
 				putNSQID(ctx, parsed->dh->id, parsed->nsIP, parsed->nsDomain);
+                sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
 			}
         }
     }
