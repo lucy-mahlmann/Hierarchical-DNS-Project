@@ -85,6 +85,7 @@ int main() {
         /* Otherwise, just ignore it. */
     }
     //TODO should i close the socket
+    close(sockfd);
     return 0;
 }
 
