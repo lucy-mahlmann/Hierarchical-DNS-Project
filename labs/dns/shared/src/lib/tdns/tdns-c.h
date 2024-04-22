@@ -35,8 +35,11 @@ struct TDNSParseResult {
   const char *qname; /* query name (i.e. domain name for A type query) */
   uint16_t qclass; /* query class */
 
-  /* Below are for handling a referral response (delegation). */ 
-  /* These should be NULL if it's not a referral response */
+  /* Below are for handling delegation. */
+  /* These should be NULL if there's no delegation */
+  /* These are updated in two cases */
+  /* 1. If the parsed message is a referral response (TDNSParseMsg()) */
+  /* 2. If the found DNS record indicates delegation (TDNSFind()) */
   const char *nsIP;  /* an IP address to the nameserver */
   const char *nsDomain; /* an IP address to the nameserver */
 };
@@ -46,7 +49,7 @@ struct TDNSFindResult {
   char serialized[MAX_RESPONSE]; /* a DNS response string based on the search result */
   ssize_t len; /* the response string's length */
   
-  /* Below is for delegation */
+  /* Unused, ignore this. */
   const char *delegate_ip; /* IP to the nameserver to which a server delegates a query */
 };
 
@@ -81,7 +84,7 @@ uint8_t TDNSParseMsg (const char *message, uint64_t size, struct TDNSParseResult
 /* Finds a DNS record for the query represented by `parsed` and stores the result in `result`*/
 /* Returns 0 if it fails to find a corresponding record */
 /* Returns 1 if it finds a corresponding record */
-/* If the record indicates delegation, result->delegate_ip will store */
+/* If the record indicates delegation, parsed->nsIP will store */
 /* the IP address to which it delegates the query */
 uint8_t TDNSFind (struct TDNSServerContext* context, struct TDNSParseResult *parsed, struct TDNSFindResult *result);
 

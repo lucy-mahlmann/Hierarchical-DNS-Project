@@ -75,6 +75,7 @@ int main() {
     struct TDNSServerContext *ctx = TDNSInit();
     /* 4. Create the edu zone using TDNSCreateZone() */
     TDNSCreateZone(ctx, "edu");
+    TDNSAddRecord(ctx, "utexas.edu", "www", "40.0.0.10", NULL); // TODO is this write to add the utexas.edu
     /* Add the UT nameserver ns.utexas.edu using using TDNSAddRecord() */
     TDNSAddRecord(ctx, "utexas.edu", "ns", NULL, NULL);
     /* Add an IP address for ns.utexas.edu domain using TDNSAddRecord() */
@@ -96,7 +97,7 @@ int main() {
             /* You can ignore the other types of queries */
 			if (TDNSFind(ctx, parsed, ret) == 1) {
                 // found a record
-				if (ret->delegate_ip != NULL) {
+				if (parsed->nsIP == NULL && parsed->nsDomain == NULL) {
 					/* a. If the record is found and the record indicates delegation, */
             		/* send an iterative query to the corresponding nameserver */
             		/* You should store a per-query context using putAddrQID() and putNSQID() */
