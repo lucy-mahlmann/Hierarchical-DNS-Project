@@ -75,9 +75,10 @@ int main() {
     struct TDNSServerContext *ctx = TDNSInit();
     /* 4. Create the edu zone using TDNSCreateZone() */
     TDNSCreateZone(ctx, "edu");
-    TDNSAddRecord(ctx, "utexas.edu", "www", "40.0.0.10", NULL); // TODO is this write to add the utexas.edu
+    //TDNSAddRecord(ctx, "edu", "utexas", "40.0.0.10", NULL); // TODO is this write to add the utexas.edu
     /* Add the UT nameserver ns.utexas.edu using using TDNSAddRecord() */
-    TDNSAddRecord(ctx, "utexas.edu", "ns", NULL, NULL);
+     TDNSAddRecord(ctx, "edu", "utexas", NULL, "ns.utexas.edu");
+    //TDNSAddRecord(ctx, "utexas.edu", "ns", NULL, NULL);
     /* Add an IP address for ns.utexas.edu domain using TDNSAddRecord() */
     TDNSAddRecord(ctx, "utexas.edu", "ns", "40.0.0.20", NULL);
     // TODO or maybe? TDNSAddRecord(ctx, "nsutexas.edu", "", "40.0.0.20", NULL);
