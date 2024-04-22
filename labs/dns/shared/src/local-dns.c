@@ -105,6 +105,7 @@ int main() {
 					// You should send the DNS query message again to another nameserver to which a local DNS server delegates 
 					// the query. In the case of delegation, the nameserver information would be stored in 
 					// struct TDNSParseResult's nsIP and nsDomain fields.
+                    printf("write: query, found a record and its a delegation\n");
 					putAddrQID(ctx, parsed->dh->id, &client_addr); //is client_addr right?
 					putNSQID(ctx, parsed->dh->id, parsed->nsIP, parsed->nsDomain);
 					// how to send query?? 
@@ -113,11 +114,13 @@ int main() {
 				} else {
 					/* b. If the record is found and the record doesn't indicate delegation, */
             		/* send a response back */
+                    printf("write: query, found a record that is not a delegation\n");
 					sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
 				}
 				
             } else {
 				/* c. If the record is not found, send a response back */
+                printf("write: error no record found\n");
 				sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
 			}  
         } else {
@@ -129,6 +132,7 @@ int main() {
 				/* getNSbyQID() and getAddrbyQID() */
 				/* You can add the NS information to the response using TDNSPutNStoMessage() */
 				/* Delete a per-query context using delAddrQID() and putNSQID() */
+                printf("write: response, message is an authoritative response\n");
 				getNSbyQID(ctx, parsed->dh->id, &(parsed->nsIP), &(parsed->nsDomain));
 				getAddrbyQID(ctx, parsed->dh->id, &client_addr);
 				uint16_t newLen = TDNSPutNStoMessage(buffer, size, parsed, parsed->nsIP, parsed->nsDomain);
@@ -142,10 +146,12 @@ int main() {
 				/* send an iterative query to the corresponding nameserver */
 				/* You can extract the query from the response using TDNSGetIterQuery() */
 				/* You should update a per-query context using putNSQID() */
+                printf("write: response,  messgae is non-authorititative\n");
 				ssize_t querySize = TDNSGetIterQuery(parsed, ret->serialized); // is ret the place to store the serialized?
 				ret->len = querySize;
 				//should i set ret->delagate_ip ??
 				putNSQID(ctx, parsed->dh->id, parsed->nsIP, parsed->nsDomain);
+                //maybe set parsed->dh->qr  = TDNS_QUERY
                 sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
 			}
         }

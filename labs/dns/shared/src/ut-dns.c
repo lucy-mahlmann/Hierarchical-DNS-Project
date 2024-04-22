@@ -56,26 +56,30 @@ int main() {
     TDNSAddRecord(ctx, "utexas.edu", "cs", NULL, "ns.cs.utexas.edu");
     /* Add an IP address for ns.cs.utexas.edu domain using TDNSAddRecord() */
     TDNSAddRecord(ctx, "cs.utexas.edu", "ns", "50.0.0.30", NULL);
-    printf("finished adding records\n");
+    printf("write: finished adding records\n");
     /* 5. Receive a message continuously and parse it using TDNSParseMsg() */
     struct TDNSParseResult *parsed = malloc(sizeof(struct TDNSParseResult));
     struct TDNSFindResult *ret = malloc(sizeof(struct TDNSFindResult));
     while(1) {
         uint64_t size = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&client_addr, &client_len); // todo should be client sockfd??
-        printf("finished recvfrom\n");
+        printf("write: finished recvfrom\n");
         if (size == -1) {
             fprintf(stderr, "ut-dns: recv error\n");
             exit(EXIT_FAILURE);
         }
         uint8_t res = TDNSParseMsg(buffer, size, parsed);
-        printf("finished parsing message\n");
+        printf("write: finished parsing message\n");
         if (res == 0) {
             /* 6. If it is a query for A, AAAA, NS DNS record */
             /* find the corresponding record using TDNSFind() and send the response back */
             if (TDNSFind(ctx, parsed, ret) == 1) {
                 // found a record
                 sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
-                printf("finished sending record\n");
+                printf("write: finished sending record\n");
+            } else {
+                // TDNSFind fails
+                sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
+                printf("write: sending error!!\n");
             }
         }
         /* Otherwise, just ignore it. */

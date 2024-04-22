@@ -70,8 +70,11 @@ int main() {
             if (TDNSFind(ctx, parsed, ret) == 1) {
                 // found a record
                 sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
+            } else {
+                // TDNSFind fails
+                sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
+                printf("write: sending error!!\n");
             }
-            //TODO i dont think i have to print the error, I think TDNSFind does that for me??
         }
         /* Otherwise, just ignore it. */
     }
