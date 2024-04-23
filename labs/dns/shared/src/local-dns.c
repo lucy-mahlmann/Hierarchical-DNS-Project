@@ -111,7 +111,6 @@ int main() {
                     printf("write: query, found a record and its a delegation\n");
                     //struct TDNSServerContext *new_ctx = TDNSInit();
                     char recv_buffer[BUFFER_SIZE];
-                    ssize_t response_size;
                     struct sockaddr_in iter_query_addr;
                     socklen_t query_len = sizeof(iter_query_addr);
                     memset(&iter_query_addr, 0, sizeof(server_addr));
@@ -121,7 +120,7 @@ int main() {
                     putAddrQID(ctx, parsed->dh->id, &iter_query_addr); //is client_addr right?
 					putNSQID(ctx, parsed->dh->id, parsed->nsIP, parsed->nsDomain);
                     sendto(sockfd, buffer, size, 0, (struct sockaddr *)&iter_query_addr, query_len);
-                    response_size = recvfrom(sockfd, recv_buffer, BUFFER_SIZE, 0, (struct sockaddr *)&iter_query_addr, &query_len);
+                    recvfrom(sockfd, recv_buffer, BUFFER_SIZE, 0, (struct sockaddr *)&iter_query_addr, &query_len);
 					
 				} else {
 					/* b. If the record is found and the record doesn't indicate delegation, */
@@ -170,7 +169,6 @@ int main() {
 				//should i set ret->delagate_ip ??
 				putNSQID(ctx, parsed->dh->id, parsed->nsIP, parsed->nsDomain);
                 char recv_buffer[BUFFER_SIZE];
-                ssize_t response_size;
                 struct sockaddr_in iter_query_addr;
                 socklen_t query_len = sizeof(iter_query_addr);
                 memset(&iter_query_addr, 0, sizeof(server_addr));
@@ -178,7 +176,7 @@ int main() {
                 inet_pton(AF_INET, parsed->nsIP, &iter_query_addr.sin_addr.s_addr);
                 iter_query_addr.sin_port = htons(DNS_PORT);
                 sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&iter_query_addr, query_len);
-                response_size = recvfrom(sockfd, recv_buffer, BUFFER_SIZE, 0, (struct sockaddr *)&iter_query_addr, &query_len);
+                recvfrom(sockfd, recv_buffer, BUFFER_SIZE, 0, (struct sockaddr *)&iter_query_addr, &query_len);
 			}
         }
     }
