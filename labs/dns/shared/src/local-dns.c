@@ -173,7 +173,7 @@ int main() {
 				getAddrbyQID(per_query_ctx, parsed->dh->id, &iter_query_addr);
 				uint16_t newLen = TDNSPutNStoMessage(buffer, size, parsed, parsed->nsIP, parsed->nsDomain);
 				// send response to original client
-				sendto(sockfd, buffer, newLen, 0, (struct sockaddr*)&iter_query_addr, query_len); // is this the right client to send to??
+				sendto(sockfd, buffer, newLen, 0, (struct sockaddr*)&client_addr, client_len); // is this the right client to send to??
 				delAddrQID(per_query_ctx, parsed->dh->id);
 				delNSQID(per_query_ctx, parsed->dh->id);
 			} else {
