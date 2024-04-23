@@ -92,6 +92,7 @@ int main() {
             fprintf(stderr, "ut-dns: recv error\n");
             exit(EXIT_FAILURE);
         }
+        //TODO should i make a new per-query context here??
         uint8_t res = TDNSParseMsg(buffer, size, parsed);
         if (res == 0) {
             /* 6. If it is a query for A, AAAA, NS DNS record, find the queried record using TDNSFind() */
@@ -108,7 +109,7 @@ int main() {
 					// the query. In the case of delegation, the nameserver information would be stored in 
 					// struct TDNSParseResult's nsIP and nsDomain fields.
                     printf("write: query, found a record and its a delegation\n");
-                    struct TDNSServerContext *new_ctx = TDNSInit();
+                    //struct TDNSServerContext *new_ctx = TDNSInit();
                     char recv_buffer[BUFFER_SIZE];
                     ssize_t response_size;
                     struct sockaddr_in iter_query_addr;
@@ -117,8 +118,8 @@ int main() {
                     iter_query_addr.sin_family = AF_INET;
                     inet_pton(AF_INET, parsed->nsIP, &iter_query_addr.sin_addr.s_addr);
                     iter_query_addr.sin_port = htons(DNS_PORT);
-                    putAddrQID(new_ctx, parsed->dh->id, &iter_query_addr); //is client_addr right?
-					putNSQID(new_ctx, parsed->dh->id, parsed->nsIP, parsed->nsDomain);
+                    putAddrQID(ctx, parsed->dh->id, &iter_query_addr); //is client_addr right?
+					putNSQID(ctx, parsed->dh->id, parsed->nsIP, parsed->nsDomain);
                     sendto(sockfd, buffer, size, 0, (struct sockaddr *)&iter_query_addr, query_len);
                     response_size = recvfrom(sockfd, recv_buffer, BUFFER_SIZE, 0, (struct sockaddr *)&iter_query_addr, &query_len);
 					
@@ -144,11 +145,17 @@ int main() {
 				/* You can add the NS information to the response using TDNSPutNStoMessage() */
 				/* Delete a per-query context using delAddrQID() and putNSQID() */
                 printf("write: response, message is an authoritative response\n");
+                struct sockaddr_in iter_query_addr;
+                socklen_t query_len = sizeof(iter_query_addr);
+                memset(&iter_query_addr, 0, sizeof(server_addr));
+                // iter_query_addr.sin_family = AF_INET;
+                //inet_pton(AF_INET, parsed->nsIP, &iter_query_addr.sin_addr.s_addr);
+                //iter_query_addr.sin_port = htons(DNS_PORT);
 				getNSbyQID(ctx, parsed->dh->id, &(parsed->nsIP), &(parsed->nsDomain));
-				getAddrbyQID(ctx, parsed->dh->id, &client_addr);
+				getAddrbyQID(ctx, parsed->dh->id, &iter_query_addr);
 				uint16_t newLen = TDNSPutNStoMessage(buffer, size, parsed, parsed->nsIP, parsed->nsDomain);
 				// send response to original client
-				sendto(sockfd, buffer, newLen, 0, (struct sockaddr*)&client_addr, client_len); // is this the right client to send to??
+				sendto(sockfd, buffer, newLen, 0, (struct sockaddr*)&iter_query_addr, query_len); // is this the right client to send to??
 				delAddrQID(ctx, parsed->dh->id);
 				putNSQID(ctx, parsed->dh->id, parsed->nsIP, parsed->nsDomain);
 			} else {
@@ -162,8 +169,16 @@ int main() {
 				ret->len = querySize;
 				//should i set ret->delagate_ip ??
 				putNSQID(ctx, parsed->dh->id, parsed->nsIP, parsed->nsDomain);
-                //maybe set parsed->dh->qr  = TDNS_QUERY
-                sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
+                char recv_buffer[BUFFER_SIZE];
+                ssize_t response_size;
+                struct sockaddr_in iter_query_addr;
+                socklen_t query_len = sizeof(iter_query_addr);
+                memset(&iter_query_addr, 0, sizeof(server_addr));
+                iter_query_addr.sin_family = AF_INET;
+                inet_pton(AF_INET, parsed->nsIP, &iter_query_addr.sin_addr.s_addr);
+                iter_query_addr.sin_port = htons(DNS_PORT);
+                sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&iter_query_addr, query_len);
+                response_size = recvfrom(sockfd, recv_buffer, BUFFER_SIZE, 0, (struct sockaddr *)&iter_query_addr, &query_len);
 			}
         }
     }
