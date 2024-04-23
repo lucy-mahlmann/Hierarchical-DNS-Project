@@ -24,30 +24,22 @@ int main() {
     
     /* 1. Create an **UDP** socket */
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    //Note that a UDP server doesn’t have to listen() and accept() since it is connectionless, 
-    //unlike TCP (what we did in A1). 
-    //Also, the UDP server should use sendto()/recvfrom() to set/get a client’s address along with 
-    //sending/receiving a message.
-    
 
     /* 2. Initialize server address (INADDR_ANY, DNS_PORT) */
     /* Then bind the socket to it */
-
     // build address data structure
     bzero((char *)&server_addr, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = INADDR_ANY; // all interfaces
+    server_addr.sin_addr.s_addr = INADDR_ANY;
     server_addr.sin_port = htons(DNS_PORT);
-
     if (bind(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
-        fprintf(stderr, "cs-dns: bind socket error.\n");
+        perror("Socket bind failed");
+        close(sockfd);
         exit(EXIT_FAILURE);
     }
-
     /* 3. Initialize a server context using TDNSInit() */
     /* This context will be used for future TDNS library function calls */
     struct TDNSServerContext *ctx = TDNSInit();
-
     /* 4. Create the cs.utexas.edu zone using TDNSCreateZone() */
     TDNSCreateZone(ctx, "cs.utexas.edu");
     /*Add an IP address for cs.utexas.edu domain using TDNSAddRecord() */
@@ -60,7 +52,8 @@ int main() {
     while(1) {
         uint64_t size = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&client_addr, &client_len); // todo should be client sockfd??
         if (size == -1) {
-            fprintf(stderr, "cs-dns: recv error\n");
+            perror("Error receiving message");
+            close(sockfd);
             exit(EXIT_FAILURE);
         }
         uint8_t res = TDNSParseMsg(buffer, size, parsed);
@@ -71,14 +64,12 @@ int main() {
                 // found a record
                 sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
             } else {
-                // TDNSFind fails
+                // TDNSFind failed
                 sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
-                printf("write: sending error!!\n");
             }
         }
         /* Otherwise, just ignore it. */
     }
-    // TODO should i close the socket
     close(sockfd);
     return 0;
 }

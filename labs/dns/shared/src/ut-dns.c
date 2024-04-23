@@ -24,30 +24,22 @@ int main() {
     
     /* 1. Create an **UDP** socket */
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    //Note that a UDP server doesn’t have to listen() and accept() since it is connectionless, 
-    //unlike TCP (what we did in A1). 
-    //Also, the UDP server should use sendto()/recvfrom() to set/get a client’s address along with 
-    //sending/receiving a message.
-    
 
     /* 2. Initialize server address (INADDR_ANY, DNS_PORT) */
     /* Then bind the socket to it */
-
     // build address data structure
     bzero((char *)&server_addr, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = INADDR_ANY; // all interfaces
+    server_addr.sin_addr.s_addr = INADDR_ANY;
     server_addr.sin_port = htons(DNS_PORT);
-
     if (bind(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
-        fprintf(stderr, "ut-dns: bind socket error.\n");
+        perror("Socket bind failed");
+        close(sockfd);
         exit(EXIT_FAILURE);
     }
-
     /* 3. Initialize a server context using TDNSInit() */
     /* This context will be used for future TDNS library function calls */
     struct TDNSServerContext *ctx = TDNSInit();
-
     /* 4. Create the utexas.edu zone using TDNSCreateZone() */
     TDNSCreateZone(ctx, "utexas.edu");
     /* Add an IP address for www.utexas.edu domain using TDNSAddRecord() */
@@ -56,35 +48,30 @@ int main() {
     TDNSAddRecord(ctx, "utexas.edu", "cs", NULL, "ns.cs.utexas.edu");
     /* Add an IP address for ns.cs.utexas.edu domain using TDNSAddRecord() */
     TDNSAddRecord(ctx, "cs.utexas.edu", "ns", "50.0.0.30", NULL);
-    printf("write: finished adding records\n");
     /* 5. Receive a message continuously and parse it using TDNSParseMsg() */
     struct TDNSParseResult *parsed = malloc(sizeof(struct TDNSParseResult));
     struct TDNSFindResult *ret = malloc(sizeof(struct TDNSFindResult));
     while(1) {
         uint64_t size = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&client_addr, &client_len); // todo should be client sockfd??
-        printf("write: finished recvfrom\n");
         if (size == -1) {
-            fprintf(stderr, "ut-dns: recv error\n");
+            perror("Error receiving message");
+            close(sockfd);
             exit(EXIT_FAILURE);
         }
         uint8_t res = TDNSParseMsg(buffer, size, parsed);
-        printf("write: finished parsing message\n");
         if (res == 0) {
             /* 6. If it is a query for A, AAAA, NS DNS record */
             /* find the corresponding record using TDNSFind() and send the response back */
             if (TDNSFind(ctx, parsed, ret) == 1) {
                 // found a record
                 sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
-                printf("write: finished sending record\n");
             } else {
-                // TDNSFind fails
+                // TDNSFind failed
                 sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
-                printf("write: sending error!!\n");
             }
         }
         /* Otherwise, just ignore it. */
     }
-    //TODO should i close the socket
     close(sockfd);
     return 0;
 }
