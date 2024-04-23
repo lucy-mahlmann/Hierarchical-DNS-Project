@@ -52,7 +52,7 @@ int main() {
     struct TDNSParseResult *parsed = malloc(sizeof(struct TDNSParseResult));
     struct TDNSFindResult *ret = malloc(sizeof(struct TDNSFindResult));
     while(1) {
-        uint64_t size = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&client_addr, &client_len); // todo should be client sockfd??
+        uint64_t size = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&client_addr, &client_len);
         if (size == -1) {
             perror("Error receiving message");
             close(sockfd);
