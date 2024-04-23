@@ -86,13 +86,23 @@ int main() {
     /* 5. Receive a message continuously and parse it using TDNSParseMsg() */
     struct TDNSParseResult *parsed = malloc(sizeof(struct TDNSParseResult));
     struct TDNSFindResult *ret = malloc(sizeof(struct TDNSFindResult));
+    struct sockaddr_in iter_query_addr;
+    socklen_t query_len = sizeof(iter_query_addr);
+    uint64_t size;
+    int iterative_query = 0;
+    struct TDNSServerContext *per_query_ctx = TDNSInit();
     while(1) {
-        uint64_t size = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&client_addr, &client_len);
+        if (iterative_query) {
+            size = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&iter_query_addr, &query_len);
+        } else {
+            size = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&client_addr, &client_len);
+        }
         if (size == -1) {
             fprintf(stderr, "ut-dns: recv error\n");
             exit(EXIT_FAILURE);
         }
         //TODO should i make a new per-query context here??
+        
         uint8_t res = TDNSParseMsg(buffer, size, parsed);
         if (res == 0) {
             /* 6. If it is a query for A, AAAA, NS DNS record, find the queried record using TDNSFind() */
@@ -109,28 +119,36 @@ int main() {
 					// the query. In the case of delegation, the nameserver information would be stored in 
 					// struct TDNSParseResult's nsIP and nsDomain fields.
                     printf("write: query, found a record and its a delegation\n");
-                    //struct TDNSServerContext *new_ctx = TDNSInit();
-                    char recv_buffer[BUFFER_SIZE];
-                    struct sockaddr_in iter_query_addr;
-                    socklen_t query_len = sizeof(iter_query_addr);
+                    iterative_query = 1;
+                    //char recv_buffer[BUFFER_SIZE];
+                    //ssize_t response_size;
+                    // struct sockaddr_in iter_query_addr;
+                    // socklen_t query_len = sizeof(iter_query_addr);
                     memset(&iter_query_addr, 0, sizeof(server_addr));
                     iter_query_addr.sin_family = AF_INET;
                     inet_pton(AF_INET, parsed->nsIP, &iter_query_addr.sin_addr.s_addr);
                     iter_query_addr.sin_port = htons(DNS_PORT);
-                    putAddrQID(ctx, parsed->dh->id, &iter_query_addr); //is client_addr right?
-					putNSQID(ctx, parsed->dh->id, parsed->nsIP, parsed->nsDomain);
+                    // set per_query_ctx address to iter_query_addr
+                    putAddrQID(per_query_ctx, parsed->dh->id, &iter_query_addr); //is client_addr right?
+                    // setting per_query_ctx nsIP = parsed->nsIP and nsDomain = parsed->nsDomain
+					putNSQID(per_query_ctx, parsed->dh->id, parsed->nsIP, parsed->nsDomain);
                     sendto(sockfd, buffer, size, 0, (struct sockaddr *)&iter_query_addr, query_len);
-                    recvfrom(sockfd, recv_buffer, BUFFER_SIZE, 0, (struct sockaddr *)&iter_query_addr, &query_len);
+                    // response_size = recvfrom(sockfd, recv_buffer, BUFFER_SIZE, 0, (struct sockaddr *)&iter_query_addr, &query_len);
+                    // if (response_size == -1) {
+                    //     fprintf(stderr, "ut-dns: recv error\n");
+                    //     exit(EXIT_FAILURE);
+                    // } 
 					
 				} else {
 					/* b. If the record is found and the record doesn't indicate delegation, */
             		/* send a response back */
+                    iterative_query = 0;
                     printf("write: query, found a record that is not a delegation\n");
 					sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
-				}
-				
+				}	
             } else {
 				/* c. If the record is not found, send a response back */
+                iterative_query = 0;
                 printf("write: error no record found\n");
 				sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&client_addr, client_len);
 			}  
@@ -143,6 +161,7 @@ int main() {
 				/* getNSbyQID() and getAddrbyQID() */
 				/* You can add the NS information to the response using TDNSPutNStoMessage() */
 				/* Delete a per-query context using delAddrQID() and putNSQID() */
+                iterative_query = 0;
                 printf("write: response, message is an authoritative response\n");
                 struct sockaddr_in iter_query_addr;
                 socklen_t query_len = sizeof(iter_query_addr);
@@ -150,13 +169,13 @@ int main() {
                 // iter_query_addr.sin_family = AF_INET;
                 //inet_pton(AF_INET, parsed->nsIP, &iter_query_addr.sin_addr.s_addr);
                 //iter_query_addr.sin_port = htons(DNS_PORT);
-				getNSbyQID(ctx, parsed->dh->id, &(parsed->nsIP), &(parsed->nsDomain));
-				getAddrbyQID(ctx, parsed->dh->id, &iter_query_addr);
+				getNSbyQID(per_query_ctx, parsed->dh->id, &(parsed->nsIP), &(parsed->nsDomain));
+				getAddrbyQID(per_query_ctx, parsed->dh->id, &iter_query_addr);
 				uint16_t newLen = TDNSPutNStoMessage(buffer, size, parsed, parsed->nsIP, parsed->nsDomain);
 				// send response to original client
 				sendto(sockfd, buffer, newLen, 0, (struct sockaddr*)&iter_query_addr, query_len); // is this the right client to send to??
-				delAddrQID(ctx, parsed->dh->id);
-				putNSQID(ctx, parsed->dh->id, parsed->nsIP, parsed->nsDomain);
+				delAddrQID(per_query_ctx, parsed->dh->id);
+				delNSQID(per_query_ctx, parsed->dh->id);
 			} else {
 				/* 7-1. If the message is a non-authoritative response */
 				/* (i.e., it contains referral to another nameserver) */
@@ -164,19 +183,20 @@ int main() {
 				/* You can extract the query from the response using TDNSGetIterQuery() */
 				/* You should update a per-query context using putNSQID() */
                 printf("write: response,  messgae is non-authorititative\n");
+                iterative_query = 1;
 				ssize_t querySize = TDNSGetIterQuery(parsed, ret->serialized); // is ret the place to store the serialized?
 				ret->len = querySize;
 				//should i set ret->delagate_ip ??
-				putNSQID(ctx, parsed->dh->id, parsed->nsIP, parsed->nsDomain);
-                char recv_buffer[BUFFER_SIZE];
-                struct sockaddr_in iter_query_addr;
-                socklen_t query_len = sizeof(iter_query_addr);
+				putNSQID(per_query_ctx, parsed->dh->id, parsed->nsIP, parsed->nsDomain);
+                //char recv_buffer[BUFFER_SIZE];
+                // struct sockaddr_in iter_query_addr;
+                // socklen_t query_len = sizeof(iter_query_addr);
                 memset(&iter_query_addr, 0, sizeof(server_addr));
                 iter_query_addr.sin_family = AF_INET;
                 inet_pton(AF_INET, parsed->nsIP, &iter_query_addr.sin_addr.s_addr);
                 iter_query_addr.sin_port = htons(DNS_PORT);
                 sendto(sockfd, ret->serialized, ret->len, 0, (struct sockaddr*)&iter_query_addr, query_len);
-                recvfrom(sockfd, recv_buffer, BUFFER_SIZE, 0, (struct sockaddr *)&iter_query_addr, &query_len);
+                //recvfrom(sockfd, recv_buffer, BUFFER_SIZE, 0, (struct sockaddr *)&iter_query_addr, &query_len);
 			}
         }
     }
