@@ -25,8 +25,8 @@ to the corresponding server using UDP.
 Logic implemented in ```cd-dns.c``` and ```ut-dns.c``` files in ```shared/src```
 - Each server binds it's address to a UDP socket.
 - The domain zone is created and DNS records are added and assigned an associated IP address.
-- If the server receives a message from a client that is a valid query it finds the corresponding DNS record to the domain name proved. Then the server sends back to the client the IP address that corresponds to the domain name.
-- Note: The ```cd-dns.c``` and ```ut-dns.c``` are both authoritative nameservers therefore when they receive a response from the client as long as it is a valid query they will have the associated IP address and can then directly respond back to the client.
+- If the server receives a message from a client that is a valid query it finds the corresponding DNS record to the domain name provided. Then the server sends back to the client the IP address that corresponds to the domain name.
+- Note: The ```cd-dns.c``` and ```ut-dns.c``` are both authoritative nameservers, therefore when they receive a response from the client as long as it is a valid query they will have the associated IP address and can then directly respond back to the client.
 
 
 <!-- ITERATIVE DNS SERVERS -->
@@ -35,14 +35,14 @@ Logic implemented in ```local-dns.c``` file in ```shared/src```
 - Each server binds it's address to a UDP socket.
 - The domain zone is created and DNS records are added and assigned an associated IP address.
 - The server can receive two types of queries: Iterative and Non-Iterative
-- If the query is an iterative query the server does not have the complete response for the client and needs to iterate the query to the corresponding nameserver that can respond back with an authoritative response (the final response) which will get sent back iteratively to the original client.
+- If the query is an iterative query the server does not have the complete response for the client and thus needs to iterate the query to the corresponding nameserver that can respond back with an authoritative response (the final response) which will get sent back iteratively to the original client.
 - If the query is a non-iterative query then no delegation needs to take place because the server can respond back with an authoritative response that contains the IP address that corresponds to the domain name.
 
 
 
 <!-- KATHARA ENVIRONMENT -->
 ## Kathara Environment 
-* Kathara is a network emulation tool that can help test network protocols or components in a sandbox environment. Within the Kathara environment each network device is implemented by a container and the links between them are emulated using a virtual network.
+* Kathara is a network emulation tool that can help test network protocols or components in a sandbox environment. Within the Kathara environment, each network device is implemented by a container and the links between them are emulated using a virtual network.
 
 Testing:
 1. First the code needs to be compiled with ```$ make``` in ```/labs/dns/shared```
