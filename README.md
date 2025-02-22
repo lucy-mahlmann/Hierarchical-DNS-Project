@@ -71,7 +71,8 @@ The C DNS library used in this assignment is built on top of the TDNS C++ librar
 
 Lucy Mahlmann - lmahlmann@utexas.edu
 
-Project Link: [https://github.com/lucy-mahlmann/Hierarchical-DNS-Project](https://github.com/lucy-mahlmann/Hierarchical-DNS-Project)
+Project Link: [https://utcs356.github.io/sp24/assignments/assignment5](https://utcs356.github.io/sp24/assignments/assignment5)
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
